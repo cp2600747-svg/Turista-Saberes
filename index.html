@@ -1,0 +1,1048 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turista Saberes 3° Secundaria - Tomo 1</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Fredoka', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        turista: {
+                            felt: '#14532d',
+                            feltDark: '#0a3a22',
+                            gold: '#fbbf24',
+                            goldDark: '#b45309',
+                            boardBg: '#022c22'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* Monopoly / Turista App Classic Felt Board */
+        .board-container {
+            background: linear-gradient(135deg, #14532d 0%, #0a3a22 100%);
+            border: 12px solid #b45309;
+            box-shadow: 
+                0 0 0 4px #78350f,
+                0 25px 60px rgba(0, 0, 0, 0.9),
+                inset 0 0 90px rgba(0, 0, 0, 0.7);
+            border-radius: 28px;
+            position: relative;
+        }
+
+        /* 11x11 Grid Layout for 40 Perimeter Tiles */
+        .turista-grid {
+            display: grid;
+            grid-template-columns: repeat(11, 1fr);
+            grid-template-rows: repeat(11, 1fr);
+            gap: 2px;
+            aspect-ratio: 1 / 1;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 6px;
+        }
+
+        /* Tile Styling */
+        .tile {
+            background: #ffffff;
+            color: #0f172a;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px;
+            position: relative;
+            font-size: 0.55rem;
+            text-align: center;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+
+        .tile:hover {
+            transform: scale(1.08);
+            z-index: 30;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.5);
+        }
+
+        .tile-corner {
+            background: #fef3c7 !important;
+            border: 2px solid #d97706 !important;
+        }
+
+        .tile-banner {
+            width: 100%;
+            height: 12px;
+            border-radius: 3px 3px 1px 1px;
+            margin-bottom: 1px;
+            box-shadow: inset 0 -1px 2px rgba(0,0,0,0.25);
+        }
+
+        .tile-center-mat {
+            grid-column: 2 / 11;
+            grid-row: 2 / 11;
+            background: radial-gradient(circle at center, #15803d 0%, #052e16 100%);
+            border-radius: 18px;
+            border: 4px solid rgba(251, 191, 36, 0.5);
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            position: relative;
+        }
+
+        /* 3D Dice Styling */
+        .dice {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(145deg, #ffffff, #e2e8f0);
+            border-radius: 10px;
+            border: 2px solid #cbd5e1;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.5), inset 0 2px 3px rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: #0f172a;
+            transition: transform 0.15s ease;
+        }
+
+        @keyframes dice-spin {
+            0% { transform: rotate(0deg) scale(0.9); }
+            50% { transform: rotate(180deg) scale(1.15); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        .rolling {
+            animation: dice-spin 0.25s infinite linear;
+        }
+
+        /* Player Tokens */
+        .player-token {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.8), inset 0 1px 2px rgba(255,255,255,0.6);
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 900;
+            color: white;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        ::-webkit-scrollbar-thumb { background: #d97706; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- LOBBY & ROOM SELECTOR -->
+    <div id="lobby-screen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-md">
+        <div class="bg-slate-900 border-2 border-amber-500/40 max-w-xl w-full rounded-3xl p-6 md:p-8 shadow-2xl relative space-y-6">
+            
+            <div class="text-center space-y-2">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-emerald-600 text-white text-3xl shadow-lg shadow-amber-500/30 mb-1">
+                    <i class="fa-solid fa-gamepad"></i>
+                </div>
+                <h1 class="font-display font-black text-3xl md:text-4xl text-amber-400 tracking-tight">
+                    TURISTA SABERES
+                </h1>
+                <p class="text-xs text-amber-200 font-bold uppercase tracking-wider">3° Secundaria • Tomo 1 (40 Casillas)</p>
+            </div>
+
+            <!-- Nickname Input -->
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-amber-300 uppercase tracking-wider">Nombre o Nombre del Equipo:</label>
+                <input type="text" id="player-nickname" placeholder="Ej. Equipo Neutrón / María" class="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-amber-400 font-bold">
+            </div>
+
+            <!-- Host vs Join Options -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <!-- CREATE ROOM (EL BANCO) -->
+                <div class="bg-slate-800/80 p-5 rounded-2xl border border-amber-500/30 hover:border-amber-500 transition space-y-3 flex flex-col justify-between">
+                    <div>
+                        <div class="text-amber-400 font-black text-lg mb-1 flex items-center">
+                            <i class="fa-solid fa-building-columns mr-2"></i>Crear como EL BANCO
+                        </div>
+                        <p class="text-[11px] text-slate-300 leading-relaxed">El equipo presentador crea la sala y asume el rol de <b>EL BANCO / HOST</b>.</p>
+                    </div>
+                    <button onclick="createRoomHost()" class="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider shadow-lg transition">
+                        Crear Sala (EL BANCO)
+                    </button>
+                </div>
+
+                <!-- JOIN ROOM -->
+                <div class="bg-slate-800/80 p-5 rounded-2xl border border-emerald-500/30 hover:border-emerald-500 transition space-y-3">
+                    <div>
+                        <div class="text-emerald-400 font-black text-lg mb-1 flex items-center">
+                            <i class="fa-solid fa-right-to-bracket mr-2"></i>Unirse a Sala
+                        </div>
+                        <p class="text-[11px] text-slate-300">Ingresa el código de 6 dígitos que te dio El Banco.</p>
+                    </div>
+                    <input type="text" id="join-room-code" placeholder="CÓDIGO (Ej: SAB-9821)" class="w-full bg-slate-900 border border-slate-700 rounded-xl py-2 px-3 text-xs text-white uppercase tracking-widest text-center font-mono font-bold focus:border-emerald-400">
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="joinRoomPlayer('player')" class="py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-[11px] uppercase tracking-wider shadow-md">
+                            <i class="fa-solid fa-gamepad mr-1"></i> Jugador
+                        </button>
+                        <button onclick="joinRoomPlayer('spectator')" class="py-2.5 bg-slate-700 hover:bg-slate-600 text-indigo-300 font-bold rounded-xl text-[11px] uppercase tracking-wider shadow-md">
+                            <i class="fa-solid fa-eye mr-1"></i> Ayudante
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- LOBBY WAITING LIST -->
+            <div id="waiting-lobby" class="hidden space-y-3 border-t border-slate-800 pt-4">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="font-bold text-amber-400 uppercase">Jugadores en Espera:</span>
+                    <span id="lobby-code-display" class="font-mono bg-amber-950 text-amber-300 px-2 py-0.5 rounded-md border border-amber-600">SAB-0000</span>
+                </div>
+                
+                <div id="lobby-players-list" class="grid grid-cols-2 gap-2 text-xs font-semibold">
+                    <!-- Dynamic Players Only -->
+                </div>
+
+                <div class="pt-2 text-center">
+                    <button id="start-game-btn" onclick="hostStartGame()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg hidden">
+                        ¡Iniciar Partida como EL BANCO!
+                    </button>
+                    <p id="waiting-host-msg" class="text-xs text-slate-400 italic">Esperando a que El Banco inicie la partida...</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MAIN HEADER -->
+    <header class="w-full max-w-7xl mx-auto p-3 flex justify-between items-center bg-slate-900/90 border-b border-amber-500/30 rounded-b-2xl mb-2 shadow-xl">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-emerald-600 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg">
+                <i class="fa-solid fa-dice"></i>
+            </div>
+            <div>
+                <h1 class="font-display font-black text-lg text-amber-400 tracking-tight flex items-center">
+                    TURISTA SABERES
+                    <span id="room-badge" class="ml-2 text-[10px] font-mono font-bold bg-amber-950 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full">SALA: ----</span>
+                </h1>
+                <p id="user-role-badge" class="text-[10px] text-slate-400 font-bold">Rol: ----</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <button onclick="toggleSpectatorChat()" class="px-3 py-1.5 bg-amber-950/80 hover:bg-amber-900 border border-amber-500/40 text-amber-300 rounded-xl text-xs font-extrabold flex items-center shadow-md">
+                <i class="fa-solid fa-comments mr-1.5 text-pink-400"></i> Chat Ayudantes
+            </button>
+            <button onclick="toggleRulesModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold">
+                <i class="fa-solid fa-book-open mr-1 text-amber-400"></i> Reglas
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN LAYOUT -->
+    <main class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 px-2 pb-4 flex-1 items-start">
+        
+        <!-- LEFT PANEL (4 cols) -->
+        <section class="lg:col-span-4 space-y-3 order-2 lg:order-1">
+            
+            <!-- BANCO DASHBOARD -->
+            <div class="bg-slate-900/90 p-3 rounded-2xl border border-amber-500/40 shadow-xl space-y-2">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <span class="text-xs font-black text-amber-400 uppercase flex items-center">
+                        <i class="fa-solid fa-building-columns mr-1.5"></i> EL BANCO CENTRAL
+                    </span>
+                    <span class="text-[10px] font-bold bg-amber-950 text-amber-300 px-2 py-0.5 rounded-full border border-amber-700">Moderador</span>
+                </div>
+                <div class="text-[11px] text-slate-300 font-medium">
+                    Capital del Banco: <b class="text-emerald-400">ILIMITADO ($)</b>
+                </div>
+            </div>
+
+            <!-- Active Players List -->
+            <div class="bg-slate-900/90 p-3 rounded-2xl border border-slate-800 shadow-xl space-y-2">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <h2 class="text-xs font-black text-slate-200 uppercase flex items-center">
+                        <i class="fa-solid fa-users text-emerald-400 mr-1.5"></i> Jugadores en la Mesa
+                    </h2>
+                    <span id="connected-count" class="text-[10px] font-bold text-emerald-400">0 Activos</span>
+                </div>
+
+                <div id="players-list" class="space-y-2">
+                    <!-- Dynamic Joined Players -->
+                </div>
+            </div>
+
+            <!-- Denominations Card -->
+            <div class="bg-slate-900/90 p-3 rounded-2xl border border-emerald-500/20 shadow-xl space-y-1.5">
+                <div class="text-[10px] font-black text-emerald-400 uppercase flex justify-between">
+                    <span><i class="fa-solid fa-money-bill-wave mr-1"></i> Billetes de Juego</span>
+                    <span>Inicio: $150,000</span>
+                </div>
+                <div class="grid grid-cols-3 gap-1 text-center text-[10px] font-extrabold">
+                    <div class="bg-emerald-950/80 border border-emerald-700/50 text-emerald-300 py-1 rounded-lg">$500</div>
+                    <div class="bg-emerald-950/80 border border-emerald-700/50 text-emerald-300 py-1 rounded-lg">$1,000</div>
+                    <div class="bg-emerald-950/80 border border-emerald-700/50 text-emerald-300 py-1 rounded-lg">$2,000</div>
+                    <div class="bg-emerald-950/80 border border-emerald-700/50 text-emerald-300 py-1 rounded-lg">$5,000</div>
+                    <div class="bg-emerald-950/80 border border-emerald-700/50 text-emerald-300 py-1 rounded-lg">$10,000</div>
+                    <div class="bg-emerald-950/80 border border-emerald-700/50 text-emerald-300 py-1 rounded-lg">$50,000</div>
+                </div>
+            </div>
+
+            <!-- Game Log -->
+            <div class="bg-slate-900/90 p-3 rounded-2xl border border-slate-800 h-32 flex flex-col shadow-xl">
+                <div class="text-[10px] font-black text-slate-400 mb-1 flex justify-between border-b border-slate-800 pb-1">
+                    <span><i class="fa-solid fa-scroll text-amber-400 mr-1"></i> Bitácora de Juego</span>
+                    <span>Transacciones</span>
+                </div>
+                <div id="game-log" class="text-[11px] space-y-1 overflow-y-auto flex-1 text-slate-300 pr-1 leading-tight font-medium">
+                    <!-- Log entries -->
+                </div>
+            </div>
+
+        </section>
+
+        <!-- RIGHT: 11x11 TURISTA BOARD (8 cols, 40 Tiles) -->
+        <section class="lg:col-span-8 flex justify-center items-center order-1 lg:order-2">
+            <div class="board-container w-full max-w-[850px]">
+                <div id="board" class="turista-grid">
+                    
+                    <!-- Center Mat -->
+                    <div class="tile-center-mat">
+                        
+                        <div class="text-center space-y-1">
+                            <h2 class="font-display font-black text-2xl md:text-3xl text-amber-400 tracking-wider drop-shadow-md">
+                                TURISTA SABERES
+                            </h2>
+                            <p class="text-[10px] text-emerald-200 uppercase font-black tracking-widest">
+                                3° Secundaria • Tomo 1 (40 Casillas)
+                            </p>
+                            <div class="flex flex-wrap justify-center gap-1.5 pt-1 text-[9px] font-extrabold">
+                                <span class="px-2 py-0.5 rounded-md bg-blue-900/80 text-blue-200 border border-blue-500/30">1. Prácticas del Hogar</span>
+                                <span class="px-2 py-0.5 rounded-md bg-purple-900/80 text-purple-200 border border-purple-500/30">2. Mujeres y Hombres de Ciencia</span>
+                                <span class="px-2 py-0.5 rounded-md bg-emerald-900/80 text-emerald-200 border border-emerald-500/30">3. Vive y Deja Vivir</span>
+                            </div>
+                        </div>
+
+                        <!-- Turn Indicator & 2 Dice -->
+                        <div class="text-center space-y-3 my-auto">
+                            
+                            <div id="turn-badge" class="text-xs font-black uppercase tracking-widest text-slate-950 bg-amber-400 border-2 border-amber-300 px-4 py-1.5 rounded-full shadow-lg inline-block">
+                                ESPERANDO JUGADORES...
+                            </div>
+
+                            <!-- 2 DICES DISPLAY -->
+                            <div class="flex justify-center items-center space-x-3 my-2">
+                                <div id="dice-1" class="dice"><i class="fa-solid fa-dice-one"></i></div>
+                                <div id="dice-2" class="dice"><i class="fa-solid fa-dice-six"></i></div>
+                            </div>
+                            
+                            <div id="dice-total-display" class="text-xs font-black text-amber-300">
+                                Total dados: -
+                            </div>
+
+                            <!-- Roll Button -->
+                            <button id="roll-btn" onclick="handleRollClick()" class="w-full max-w-xs bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black py-3 px-6 rounded-xl shadow-xl transition transform active:scale-95 text-xs uppercase tracking-wider flex items-center justify-center mx-auto border border-amber-300">
+                                <i class="fa-solid fa-dice text-base mr-2"></i> Lanzar 2 Dados
+                            </button>
+
+                        </div>
+
+                        <p id="turn-instruction" class="text-[10px] text-emerald-100/80 text-center font-medium">
+                            Únete como Jugador o El Banco para tirar los dados.
+                        </p>
+
+                    </div>
+
+                    <!-- 40 Perimeter Tiles rendered dynamically -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- SPECTATOR / HELPER CHAT SIDEBAR -->
+    <aside id="chat-sidebar" class="fixed top-0 right-0 h-full w-80 max-w-full bg-slate-900 border-l border-amber-500/30 z-40 transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+        <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-comments text-pink-400"></i>
+                <h3 class="font-extrabold text-xs text-white uppercase tracking-wider">Chat de Ayudantes</h3>
+            </div>
+            <button onclick="toggleSpectatorChat()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        
+        <div class="p-2 bg-amber-950/40 text-[10px] text-amber-300 text-center border-b border-amber-500/20 font-semibold">
+            💡 Los espectadores pueden colaborar orientando sobre las respuestas de los temas.
+        </div>
+
+        <div id="chat-messages" class="flex-1 p-3 overflow-y-auto space-y-2 text-xs">
+            <!-- Chat Messages -->
+        </div>
+
+        <form onsubmit="sendChatMessage(event)" class="p-3 border-t border-slate-800 flex gap-2 bg-slate-950">
+            <input type="text" id="chat-input" placeholder="Envía una pista o sugerencia..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+            <button type="submit" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-xl text-xs font-black">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </form>
+    </aside>
+
+    <!-- MODAL 1: PROMPT BUY OPTION (COMPRAR / NO COMPRAR) -->
+    <div id="modal-buy-prompt" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex justify-center items-center p-4 z-50 hidden">
+        <div class="bg-slate-900 border-2 border-amber-500/40 max-w-md w-full rounded-3xl p-6 shadow-2xl space-y-4 text-center">
+            <div id="buy-prompt-icon" class="w-14 h-14 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center text-3xl mx-auto font-black shadow-lg">
+                <i class="fa-solid fa-house-circle-check"></i>
+            </div>
+            <h3 id="buy-prompt-title" class="text-xl font-black text-amber-400">¿Deseas Comprar la Propiedad?</h3>
+            <p id="buy-prompt-desc" class="text-xs text-slate-300 leading-relaxed font-medium">Caíste en una casilla sin dueño.</p>
+            
+            <div class="bg-slate-950 p-3.5 rounded-2xl border border-amber-500/20 flex justify-around text-xs font-bold">
+                <span id="buy-prompt-price" class="text-emerald-400">Precio: $0</span>
+                <span id="buy-prompt-rent" class="text-slate-400">Peaje: $0</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="chooseBuyProperty(false)" class="py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold rounded-xl text-xs uppercase tracking-wider">
+                    <i class="fa-solid fa-xmark mr-1"></i> No Comprar
+                </button>
+                <button onclick="chooseBuyProperty(true)" class="py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider shadow-lg">
+                    <i class="fa-solid fa-check mr-1"></i> Comprar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: QUIZ & CONCEPT (IF BUY CHOSEN) -->
+    <div id="modal-quiz" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex justify-center items-center p-4 z-50 hidden">
+        <div class="bg-slate-900 border-2 border-amber-500/40 max-w-lg w-full rounded-3xl p-6 shadow-2xl space-y-4">
+            <div class="flex items-center space-x-3 border-b border-slate-800 pb-3">
+                <div id="quiz-icon-container" class="w-12 h-12 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center text-2xl shadow-lg font-black">
+                    <i class="fa-solid fa-flask"></i>
+                </div>
+                <div>
+                    <h3 id="quiz-topic-title" class="text-lg font-black text-amber-400">Nombre del Tema</h3>
+                    <div class="flex gap-3 text-xs font-bold">
+                        <span id="quiz-topic-price" class="text-emerald-400">Precio: $0</span>
+                        <span id="quiz-topic-rent" class="text-slate-400">Peaje: $0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Concept Explanation -->
+            <div class="bg-slate-950 p-3.5 rounded-2xl border border-amber-500/20 space-y-1">
+                <div class="text-[11px] font-black text-amber-300 flex items-center">
+                    <i class="fa-solid fa-lightbulb text-amber-400 mr-1.5"></i> Concepto Escolar (Tomo 1):
+                </div>
+                <p id="quiz-topic-desc" class="text-slate-300 text-xs leading-relaxed font-medium">Explicación del tema...</p>
+            </div>
+
+            <!-- Question -->
+            <div class="space-y-2">
+                <p id="quiz-question-text" class="text-xs font-black text-white flex items-center">
+                    <i class="fa-solid fa-circle-question text-pink-400 mr-2"></i> Pregunta de Validación para Adquirir:
+                </p>
+                <div id="quiz-options-container" class="space-y-2">
+                    <!-- Options -->
+                </div>
+            </div>
+
+            <div id="quiz-feedback" class="text-xs font-bold text-center hidden p-3 rounded-xl"></div>
+
+            <div class="flex justify-end pt-1">
+                <button id="quiz-close-btn" onclick="closeModal('modal-quiz'); completeTurn();" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black shadow-lg hidden">
+                    Continuar Turno <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: AUCTION SYSTEM -->
+    <div id="modal-auction" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex justify-center items-center p-4 z-50 hidden">
+        <div class="bg-slate-900 border-2 border-amber-500/40 max-w-md w-full rounded-3xl p-6 shadow-2xl space-y-4 text-center">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center text-2xl mx-auto font-black shadow-lg">
+                <i class="fa-solid fa-gavel"></i>
+            </div>
+            <h3 class="text-lg font-black text-amber-400">¡Subasta Pública por Bancarrota!</h3>
+            <p id="auction-prop-title" class="text-xs text-slate-200 font-bold">Propiedad en remate...</p>
+
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+                <div class="text-xs text-slate-400">Puja Actual:</div>
+                <div id="auction-highest-bid" class="text-2xl font-black text-emerald-400">$0</div>
+                <div id="auction-highest-bidder" class="text-xs text-amber-300 font-bold">Líder: Nadie</div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="placeBid(2000)" class="py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs uppercase">
+                    Pujar +$2,000
+                </button>
+                <button onclick="placeBid(5000)" class="py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold rounded-xl text-xs uppercase">
+                    Pujar +$5,000
+                </button>
+            </div>
+
+            <button onclick="closeAuction()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold">
+                Cerrar Subasta / Adjudicar
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL 4: GENERAL INFO -->
+    <div id="modal-info" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex justify-center items-center p-4 z-50 hidden">
+        <div class="bg-slate-900 border border-amber-500/40 max-w-md w-full rounded-3xl p-6 shadow-2xl space-y-4 text-center">
+            <div id="info-icon" class="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-2xl mx-auto shadow-lg">
+                <i class="fa-solid fa-circle-info"></i>
+            </div>
+            <h3 id="info-title" class="text-lg font-black text-white">Aviso</h3>
+            <p id="info-message" class="text-xs text-slate-300 leading-relaxed font-medium">Mensaje...</p>
+            <div id="info-actions" class="flex justify-center gap-2 pt-2">
+                <button onclick="closeModal('modal-info'); completeTurn();" class="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black uppercase">
+                    Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: RULES -->
+    <div id="modal-rules" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex justify-center items-center p-4 z-50 hidden">
+        <div class="bg-slate-900 border border-amber-500/40 max-w-xl w-full rounded-3xl p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-base font-black text-amber-400 flex items-center">
+                    <i class="fa-solid fa-book-open mr-2"></i> Reglamento Turista Saberes (40 Casillas)
+                </h3>
+                <button onclick="toggleRulesModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <ul class="text-xs space-y-2.5 text-slate-300 list-disc pl-4 leading-relaxed font-medium">
+                <li><strong class="text-white">El Banco:</strong> El equipo presentador crea la sala y asume el rol de El Banco Central / Host.</li>
+                <li><strong class="text-white">Capital Inicial:</strong> $150,000 por jugador ($500, $1k, $2k, $5k, $10k, $50k).</li>
+                <li><strong class="text-white">Primera Vuelta:</strong> Nadie puede comprar propiedades en su 1er recorrido hasta pasar la casilla de INICIO ($10,000 de bono).</li>
+                <li><strong class="text-white">Mecánica de Compra:</strong> Al caer en una propiedad, eliges [COMPRAR] o [NO COMPRAR]. Si eliges comprar, respondes el quiz del Tomo 1. Si contestas bien, la compras; si te equivocas, no la compras ese turno.</li>
+                <li><strong class="text-white">Deportado:</strong> Elige pagar $5,000 de multa o perder 2 turnos.</li>
+                <li><strong class="text-white">Cárcel:</strong> Sanción de congelamiento por 3 turnos.</li>
+                <li><strong class="text-white">Bancarrota:</strong> Si te quedas sin dinero, tus casillas pasan a subasta pública en vivo.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- GAME LOGIC SCRIPT -->
+    <script>
+        const diceIcons = ['fa-dice-one', 'fa-dice-two', 'fa-dice-three', 'fa-dice-four', 'fa-dice-five', 'fa-dice-six'];
+        const PLAYER_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+        const PLAYER_SYMBOLS = ['+', '−', '×', '÷', '√'];
+        const PLAYER_SYMBOL_NAMES = ['Suma (+)', 'Resta (−)', 'Multiplicación (×)', 'División (÷)', 'Raíz Cuadrada (√)'];
+
+        // --- COMPLETE 40-TILE BOARD DATA (11 PER SIDE INCLUDING CORNERS) ---
+        const BOARD_TILES = [
+            // BOTTOM ROW (Right to Left: Tiles 0 to 10)
+            { id: 0, name: 'INICIO / SALIDA', type: 'start', color: '#10b981', icon: 'fa-flag-checkered', gridPos: 'grid-row: 11; grid-column: 11;' },
+            { id: 1, name: 'Plantas Medicinales', type: 'property', price: 6000, rent: 1200, color: '#3b82f6', icon: 'fa-leaf', desc: 'Uso ancestral de plantas como la manzanilla para malestares digestivos.', q: '¿Qué propiedad tradicional destaca en el té de manzanilla?', opts: ['Antiséptico fuerte', 'Calmante y digestivo', 'Antibiótico sintético', 'Anestésico total'], correct: 1, gridPos: 'grid-row: 11; grid-column: 10;' },
+            { id: 2, name: 'Tarjeta Reto', type: 'chance', color: '#f59e0b', icon: 'fa-question', gridPos: 'grid-row: 11; grid-column: 9;' },
+            { id: 3, name: 'Herbolaria Familiar', type: 'property', price: 8000, rent: 1600, color: '#3b82f6', icon: 'fa-seedling', desc: 'Trasmisión intergeneracional de remedios con plantas aromáticas.', q: '¿Qué planta se usa comúnmente en infusión para calmar los nervios?', opts: ['Manzanilla y Toronjil', 'Chile serrano', 'Sábila pura', 'Eucalipto hervido'], correct: 0, gridPos: 'grid-row: 11; grid-column: 8;' },
+            { id: 4, name: 'Impuesto Escolar', type: 'tax', price: 5000, color: '#ef4444', icon: 'fa-receipt', gridPos: 'grid-row: 11; grid-column: 7;' },
+            { id: 5, name: 'Fermentación Casera', type: 'property', price: 10000, rent: 2000, color: '#3b82f6', icon: 'fa-jar', desc: 'Proceso biológico anaeróbico para alimentos como el tepache.', q: '¿Qué microorganismos convierten los azúcares en alcohol en la fermentación casera?', opts: ['Levaduras y bacterias', 'Virus', 'Protozoarios', 'Esporas de hongos'], correct: 0, gridPos: 'grid-row: 11; grid-column: 6;' },
+            { id: 6, name: 'Tintes Orgánicos', type: 'property', price: 12000, rent: 2400, color: '#3b82f6', icon: 'fa-palette', desc: 'Pigmentos naturales derivados de la grana cochinilla o flor de cempasúchil.', q: '¿De qué insecto tradicional se obtiene el tinte carmín?', opts: ['Avena', 'Grana Cochinilla', 'Insecto hoja', 'Oruga de seda'], correct: 1, gridPos: 'grid-row: 11; grid-column: 5;' },
+            { id: 7, name: 'Conservación de Alimentos', type: 'property', price: 14000, rent: 2800, color: '#3b82f6', icon: 'fa-box-archive', desc: 'Métodos caseros como el salado, ahumado y almíbar.', q: '¿Cuál es la función de la sal en la conservación de carnes?', opts: ['Deshidratar e inhibir bacterias', 'Enfriar el alimento', 'Aumentar agua', 'Pintar la carne'], correct: 0, gridPos: 'grid-row: 11; grid-column: 4;' },
+            { id: 8, name: 'Medicina Tradicional', type: 'property', price: 16000, rent: 3200, color: '#3b82f6', icon: 'fa-mortar-pestle', desc: 'Saberes comunitarios reconocidos para el bienestar familiar.', q: '¿Qué institución reconoce el valor de la medicina tradicional?', opts: ['OMS', 'NASA', 'INTERPOL', 'FIFA'], correct: 0, gridPos: 'grid-row: 11; grid-column: 3;' },
+            { id: 9, name: 'Estadística de Salud', type: 'property', price: 18000, rent: 3600, color: '#3b82f6', icon: 'fa-chart-simple', desc: 'Uso de Media, Mediana y Moda para analizar la salud en el hogar.', q: 'En los datos 10, 20, 20, 50. ¿Cuál es la Moda?', opts: ['10', '20', '25', '50'], correct: 1, gridPos: 'grid-row: 11; grid-column: 2;' },
+            { id: 10, name: 'CÁRCEL', type: 'jail', color: '#475569', icon: 'fa-lock', gridPos: 'grid-row: 11; grid-column: 1;' },
+
+            // LEFT COLUMN (Bottom to Top: Tiles 11 to 19)
+            { id: 11, name: 'Marie Curie', type: 'property', price: 20000, rent: 4000, color: '#8b5cf6', icon: 'fa-radiation', desc: 'Pionera en radiactividad. Ganadora de dos Premios Nobel.', q: '¿Qué elementos químicos descubrió Marie Curie junto a su esposo?', opts: ['Radio y Polonio', 'Uranio y Plutonio', 'Sodio y Potasio', 'Helio y Neón'], correct: 0, gridPos: 'grid-row: 10; grid-column: 1;' },
+            { id: 12, name: 'Mario Molina', type: 'property', price: 22000, rent: 4400, color: '#8b5cf6', icon: 'fa-cloud-sun', desc: 'Premio Nobel mexicano por sus investigaciones de la capa de ozono.', q: '¿Qué compuestos dañaban la capa de ozono según Mario Molina?', opts: ['CFC (Clorofluorocarbonos)', 'Dióxido de carbono', 'Metano', 'Óxido nitroso'], correct: 0, gridPos: 'grid-row: 9; grid-column: 1;' },
+            { id: 13, name: 'Tarjeta Reto', type: 'chance', color: '#f59e0b', icon: 'fa-question', gridPos: 'grid-row: 8; grid-column: 1;' },
+            { id: 14, name: 'Rosalind Franklin', type: 'property', price: 24000, rent: 4800, color: '#8b5cf6', icon: 'fa-dna', desc: 'Clave para la cristalografía de rayos X y la estructura del ADN.', q: '¿Qué famosa imagen capturó Rosalind Franklin?', opts: ['Fotografía 51', 'Imagen Radiante', 'Placa X-10', 'Micrografía B'], correct: 0, gridPos: 'grid-row: 7; grid-column: 1;' },
+            { id: 15, name: 'DEPORTADO', type: 'deported', color: '#e11d48', icon: 'fa-passport', gridPos: 'grid-row: 6; grid-column: 1;' },
+            { id: 16, name: 'Louis Pasteur', type: 'property', price: 26000, rent: 5200, color: '#8b5cf6', icon: 'fa-vial-virus', desc: 'Desarrolló la pasteurización y vacunas contra la rabia.', q: '¿En qué consiste la pasteurización?', opts: ['Calentar líquidos para eliminar patógenos', 'Congelar a cero grados', 'Filtrar agua', 'Agregar sal'], correct: 0, gridPos: 'grid-row: 5; grid-column: 1;' },
+            { id: 17, name: 'Dmitri Mendeléyev', type: 'property', price: 28000, rent: 5600, color: '#8b5cf6', icon: 'fa-table-cells', desc: 'Organizó la primera Tabla Periódica de los elementos.', q: '¿Bajo qué criterio ordenó Mendeléyev los elementos?', opts: ['Masa atómica y propiedades', 'Color y brillo', 'Estado físico', 'Densidad del agua'], correct: 0, gridPos: 'grid-row: 4; grid-column: 1;' },
+            { id: 18, name: 'Hipatia de Alejandría', type: 'property', price: 30000, rent: 6000, color: '#8b5cf6', icon: 'fa-star', desc: 'Matemática y astrónoma de la antigüedad.', q: '¿En qué áreas destacó Hipatia?', opts: ['Matemáticas y Astronomía', 'Robótica', 'Genética', 'Física Cuántica'], correct: 0, gridPos: 'grid-row: 3; grid-column: 1;' },
+            { id: 19, name: 'Galileo Galilei', type: 'property', price: 32000, rent: 6400, color: '#8b5cf6', icon: 'fa-telescope', desc: 'Mejoró el telescopio y apoyó el heliocentrismo.', q: '¿Qué teoría defendió Galileo Galilei?', opts: ['Heliocentrismo (El Sol al centro)', 'Geocentrismo', 'Tierra Plana', 'Universo Estático'], correct: 0, gridPos: 'grid-row: 2; grid-column: 1;' },
+            { id: 20, name: 'PARADA LIBRE / RECREO', type: 'free', color: '#059669', icon: 'fa-mug-hot', gridPos: 'grid-row: 1; grid-column: 1;' },
+
+            // TOP ROW (Left to Right: Tiles 21 to 29)
+            { id: 21, name: 'Isaac Newton', type: 'property', price: 34000, rent: 6800, color: '#8b5cf6', icon: 'fa-apple-whole', desc: 'Formuló las leyes del movimiento y la gravitación universal.', q: '¿Qué ley explica que a toda acción corresponde una reacción?', opts: ['3ra Ley de Newton', '1ra Ley de Newton', 'Ley de Ohm', 'Ley de Pascal'], correct: 0, gridPos: 'grid-row: 1; grid-column: 2;' },
+            { id: 22, name: 'Albert Einstein', type: 'property', price: 36000, rent: 7200, color: '#8b5cf6', icon: 'fa-atom', desc: 'Desarrolló la Teoría de la Relatividad.', q: '¿Qué famosa ecuación relaciona masa y energía?', opts: ['E = mc²', 'F = ma', 'V = IR', 'PV = nRT'], correct: 0, gridPos: 'grid-row: 1; grid-column: 3;' },
+            { id: 23, name: 'Tarjeta Reto', type: 'chance', color: '#f59e0b', icon: 'fa-question', gridPos: 'grid-row: 1; grid-column: 4;' },
+            { id: 24, name: 'Ada Lovelace', type: 'property', price: 38000, rent: 7600, color: '#8b5cf6', icon: 'fa-code', desc: 'Primera programadora de computadoras de la historia.', q: '¿Con qué científico colaboró Ada Lovelace en la Máquina Analítica?', opts: ['Charles Babbage', 'Alan Turing', 'Bill Gates', 'Steve Jobs'], correct: 0, gridPos: 'grid-row: 1; grid-column: 5;' },
+            { id: 25, name: 'Huella Ecológica', type: 'property', price: 40000, rent: 8000, color: '#ec4899', icon: 'fa-shoe-prints', desc: 'Medida del impacto del consumo humano sobre los ecosistemas.', q: '¿Qué mide la Huella Ecológica?', opts: ['Demanda humana de recursos naturales', 'Kilos de plástico quemado', 'Pasos en el día', 'Consumo de gas L.P.'], correct: 0, gridPos: 'grid-row: 1; grid-column: 6;' },
+            { id: 26, name: 'Regla de las 3R', type: 'property', price: 42000, rent: 8400, color: '#ec4899', icon: 'fa-recycle', desc: 'Reducir, Reutilizar y Reciclar para minimizar residuos.', q: '¿Cuál de las 3R significa disminuir el consumo inicial?', opts: ['Reducir', 'Reutilizar', 'Reciclar', 'Reorganizar'], correct: 0, gridPos: 'grid-row: 1; grid-column: 7;' },
+            { id: 27, name: 'Energías Renovables', type: 'property', price: 44000, rent: 8800, color: '#ec4899', icon: 'fa-solar-panel', desc: 'Fuentes inagotables que no emiten gases de efecto invernadero.', q: '¿Cuál es una energía limpia y renovable?', opts: ['Energía Solar Fotovoltaica', 'Carbón', 'Gas natural', 'Gasolina'], correct: 0, gridPos: 'grid-row: 1; grid-column: 8;' },
+            { id: 28, name: 'Ecuaciones de Impacto', type: 'property', price: 46000, rent: 9200, color: '#ec4899', icon: 'fa-calculator', desc: 'Álgebra aplicada al cálculo de proyecciones ambientales.', q: 'Si f(x) = 4x kg de basura por día, ¿cuánta basura hay en 5 días?', opts: ['20 kg', '10 kg', '15 kg', '25 kg'], correct: 0, gridPos: 'grid-row: 1; grid-column: 9;' },
+            { id: 29, name: 'Composta Casera', type: 'property', price: 48000, rent: 9600, color: '#ec4899', icon: 'fa-trash-can-arrow-up', desc: 'Descomposición controlada de residuos orgánicos.', q: '¿Qué residuo SÍ se debe depositar en una composta?', opts: ['Cáscaras de verdura', 'Pilas alcalinas', 'Bolsas de plástico', 'Vidrio'], correct: 0, gridPos: 'grid-row: 1; grid-column: 10;' },
+            { id: 30, name: 'IR A LA CÁRCEL', type: 'go-to-jail', color: '#475569', icon: 'fa-handcuffs', gridPos: 'grid-row: 1; grid-column: 11;' },
+
+            // RIGHT COLUMN (Top to Bottom: Tiles 31 to 39)
+            { id: 31, name: 'Cuidado del Agua', type: 'property', price: 50000, rent: 10000, color: '#ec4899', icon: 'fa-droplet', desc: 'Aprovechamiento y captación pluvial sustentable.', q: '¿Qué porcentaje aprox del agua en la Tierra es dulce y disponible?', opts: ['Menos del 3%', '70%', '50%', '25%'], correct: 0, gridPos: 'grid-row: 2; grid-column: 11;' },
+            { id: 32, name: 'Biodiversidad Local', type: 'property', price: 52000, rent: 10400, color: '#ec4899', icon: 'fa-tree', desc: 'Variedad de especies biológicas en la comunidad.', q: '¿Qué amenaza directamente a la biodiversidad local?', opts: ['Deforestación y contaminación', 'Reforestación', 'Uso de bicicleta', 'Compostaje'], correct: 0, gridPos: 'grid-row: 3; grid-column: 11;' },
+            { id: 33, name: 'Tarjeta Reto', type: 'chance', color: '#f59e0b', icon: 'fa-question', gridPos: 'grid-row: 4; grid-column: 11;' },
+            { id: 34, name: 'Cambio Climático', type: 'property', price: 54000, rent: 10800, color: '#ec4899', icon: 'fa-temperature-arrow-up', desc: 'Variación global del clima por emisiones de CO2.', q: '¿Cuál es la principal causa del calentamiento global reciente?', opts: ['Emisiones humanas de gases de efecto invernadero', 'Rayos cósmicos', 'Viento solar', 'Fases lunares'], correct: 0, gridPos: 'grid-row: 5; grid-column: 11;' },
+            { id: 35, name: 'Consumo Sustentable', type: 'property', price: 56000, rent: 11200, color: '#ec4899', icon: 'fa-bag-shopping', desc: 'Uso de bienes que satisfacen necesidades sin comprometer el futuro.', q: '¿Qué promueve el consumo sustentable?', opts: ['Comprar solo lo necesario y duradero', 'Comprar plástico desechable', 'Tirar ropa útil', 'Usar envases únicos'], correct: 0, gridPos: 'grid-row: 6; grid-column: 11;' },
+            { id: 36, name: 'Huella de Carbono', type: 'property', price: 58000, rent: 11600, color: '#ec4899', icon: 'fa-smog', desc: 'Total de gases de efecto invernadero emitidos por un individuo.', q: '¿Cómo se reduce la huella de carbono personal?', opts: ['Usando transporte público o bicicleta', 'Dejando luces encendidas', 'Quemando basura', 'Usando auto para distancias cortas'], correct: 0, gridPos: 'grid-row: 7; grid-column: 11;' },
+            { id: 37, name: 'Impuesto Ecológico', type: 'tax', price: 10000, color: '#ef4444', icon: 'fa-file-invoice-dollar', gridPos: 'grid-row: 8; grid-column: 11;' },
+            { id: 38, name: 'Huerto Escolar', type: 'property', price: 60000, rent: 12000, color: '#3b82f6', icon: 'fa-wheat-awn', desc: 'Espacio de aprendizaje práctico para cultivo de hortalizas.', q: '¿Qué beneficio aporta un huerto escolar?', opts: ['Alimentos frescos y aprendizaje biológico', 'Ruidos fuertes', 'Basura plástica', 'Gasto de gasolina'], correct: 0, gridPos: 'grid-row: 9; grid-column: 11;' },
+            { id: 39, name: 'Infusiones y Extractos', type: 'property', price: 62000, rent: 12400, color: '#3b82f6', icon: 'fa-flask-vial', desc: 'Extracción de principios activos mediante soluciones calientes.', q: '¿Cómo se llama la extracción con agua hirviendo sobre la planta?', opts: ['Infusión / Decocción', 'Sublimación', 'Evaporación seca', 'Condensación'], correct: 0, gridPos: 'grid-row: 10; grid-column: 11;' }
+        ];
+
+        const CHANCE_CARDS = [
+            { text: '¡Excelente proyecto de compostaje casero! El Banco te otorga $15,000.', amount: 15000 },
+            { text: 'Multa por tirado indebido de residuos orgánicos. Pagas $10,000.', amount: -10000 },
+            { text: 'Ganaste el concurso escolar de Mujeres y Hombres de Ciencia. Cobras $20,000.', amount: 20000 },
+            { text: 'Aportación para la instalación de paneles solares. Pagas $5,000.', amount: -5000 }
+        ];
+
+        // --- GLOBAL ROOM STATE ---
+        let roomCode = null;
+        let userRole = 'spectator'; 
+        let myPlayerId = null;
+        let gameState = {
+            roomCode: null,
+            hostName: 'El Banco',
+            gameStarted: false,
+            players: [], // CLEAN LOBBY AT START
+            propertiesOwner: {},
+            currentTurnIndex: 0,
+            chatMessages: []
+        };
+        let isRolling = false;
+        let pendingTileForPurchase = null;
+        let currentAuctionTile = null;
+        let highestBid = 0;
+        let highestBidder = null;
+
+        // --- LOBBY & SETUP ---
+
+        window.createRoomHost = function() {
+            const nickname = document.getElementById('player-nickname').value.trim() || 'El Banco Central';
+            roomCode = 'SAB-' + Math.floor(1000 + Math.random() * 9000);
+            userRole = 'banco';
+
+            gameState = {
+                roomCode: roomCode,
+                hostName: nickname,
+                gameStarted: false,
+                players: [], 
+                propertiesOwner: {},
+                currentTurnIndex: 0,
+                chatMessages: [{ sender: 'El Banco', text: `¡Sala ${roomCode} creada! Esperando a los jugadores...` }]
+            };
+
+            showWaitingLobby();
+        };
+
+        window.joinRoomPlayer = function(role) {
+            const codeInput = document.getElementById('join-room-code').value.trim().toUpperCase();
+            if(!codeInput) {
+                alert('Ingresa un código de sala válido.');
+                return;
+            }
+            const nickname = document.getElementById('player-nickname').value.trim() || (role==='player'?'Jugador':'Ayudante');
+            roomCode = codeInput;
+            userRole = role;
+
+            if(role === 'player' && gameState.players.length < 5) {
+                const assignedId = gameState.players.length + 1;
+                myPlayerId = assignedId;
+                const assignedColor = PLAYER_COLORS[assignedId - 1] || '#3b82f6';
+                const assignedSymbol = PLAYER_SYMBOLS[assignedId - 1] || '+';
+
+                gameState.players.push({
+                    id: assignedId,
+                    symbol: assignedSymbol,
+                    symbolName: PLAYER_SYMBOL_NAMES[assignedId - 1],
+                    name: nickname,
+                    color: assignedColor,
+                    money: 150000,
+                    position: 0,
+                    laps: 0,
+                    inJail: false,
+                    jailTurns: 0,
+                    bankrupt: false
+                });
+            }
+
+            showWaitingLobby();
+        };
+
+        function showWaitingLobby() {
+            document.getElementById('waiting-lobby').classList.remove('hidden');
+            document.getElementById('lobby-code-display').innerText = roomCode;
+
+            if(userRole === 'banco') {
+                document.getElementById('start-game-btn').classList.remove('hidden');
+                document.getElementById('waiting-host-msg').classList.add('hidden');
+            } else {
+                document.getElementById('start-game-btn').classList.add('hidden');
+                document.getElementById('waiting-host-msg').classList.remove('hidden');
+            }
+
+            updateLobbyPlayersList();
+        }
+
+        function updateLobbyPlayersList() {
+            const container = document.getElementById('lobby-players-list');
+            if(!container) return;
+            container.innerHTML = '';
+
+            if(gameState.players.length === 0) {
+                container.innerHTML = '<div class="col-span-2 text-slate-400 italic text-center py-2">Sin jugadores unidos aún.</div>';
+                return;
+            }
+
+            gameState.players.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'p-2 bg-slate-800 rounded-xl border border-slate-700 flex items-center space-x-2';
+                item.innerHTML = `
+                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-black text-white shadow" style="background-color: ${p.color}">${p.symbol}</span>
+                    <span class="text-white font-bold">${p.name} <span class="text-[10px] text-amber-300">(${p.symbol})</span></span>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        window.hostStartGame = function() {
+            if(gameState.players.length === 0) {
+                alert('Se necesita al menos 1 jugador unido para empezar.');
+                return;
+            }
+            gameState.gameStarted = true;
+            enterGameUI();
+        };
+
+        function enterGameUI() {
+            document.getElementById('lobby-screen').classList.add('hidden');
+            document.getElementById('room-badge').innerText = `SALA: ${roomCode}`;
+            document.getElementById('user-role-badge').innerText = `Rol: ${userRole === 'banco' ? 'EL BANCO CENTRAL' : userRole === 'player' ? 'Jugador Activo' : 'Espectador / Ayudante'}`;
+            
+            renderBoard();
+            updateUI();
+        }
+
+        // --- BOARD RENDER & UI ---
+
+        function renderBoard() {
+            const boardEl = document.getElementById('board');
+            const centerEl = boardEl.querySelector('.tile-center-mat');
+            boardEl.innerHTML = '';
+            boardEl.appendChild(centerEl);
+
+            BOARD_TILES.forEach(tile => {
+                const tileEl = document.createElement('div');
+                const isCorner = [0, 10, 20, 30].includes(tile.id);
+                tileEl.className = `tile ${isCorner ? 'tile-corner' : ''}`;
+                tileEl.style = tile.gridPos;
+                tileEl.id = `tile-${tile.id}`;
+
+                let headerHtml = tile.type === 'property' 
+                    ? `<div class="tile-banner" style="background-color: ${tile.color};"></div>`
+                    : '';
+
+                tileEl.innerHTML = `
+                    ${headerHtml}
+                    <div class="text-[8px] font-black text-slate-900 truncate w-full px-0.5 leading-tight">${tile.name}</div>
+                    <div class="my-0.5 text-amber-700"><i class="fa-solid ${tile.icon} text-[10px]"></i></div>
+                    ${tile.price ? `<div class="text-[7px] font-black text-emerald-700">$${tile.price.toLocaleString()}</div>` : ''}
+                    <div id="owner-badge-${tile.id}" class="text-[7px] font-black uppercase text-amber-600"></div>
+                    <div id="tile-tokens-${tile.id}" class="flex flex-wrap gap-0.5 justify-center mt-0.5"></div>
+                `;
+
+                boardEl.appendChild(tileEl);
+            });
+        }
+
+        function updateUI() {
+            updatePlayersList();
+            updateTokensOnBoard();
+            updateTurnControls();
+            renderChatMessages();
+            document.getElementById('connected-count').innerText = `${gameState.players.length} Activos`;
+        }
+
+        function updatePlayersList() {
+            const listEl = document.getElementById('players-list');
+            listEl.innerHTML = '';
+
+            if(gameState.players.length === 0) {
+                listEl.innerHTML = '<div class="text-slate-400 text-xs text-center py-2">Esperando que se unan jugadores...</div>';
+                return;
+            }
+
+            gameState.players.forEach((p, idx) => {
+                const card = document.createElement('div');
+                const isCurrent = idx === gameState.currentTurnIndex && !p.bankrupt;
+                
+                card.className = `p-2.5 rounded-xl border transition-all ${isCurrent ? 'bg-amber-950/80 border-amber-500 shadow-md scale-[1.01]' : 'bg-slate-800/80 border-slate-700'} ${p.bankrupt ? 'opacity-30 grayscale' : ''}`;
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-black text-white shadow" style="background-color: ${p.color}">${p.symbol}</span>
+                            <span class="font-extrabold text-xs text-white">${p.name}</span>
+                            ${p.bankrupt ? '<span class="text-[8px] bg-rose-950 text-rose-400 px-1.5 py-0.5 rounded-full uppercase">Bancarrota</span>' : ''}
+                            ${p.inJail ? '<span class="text-[8px] bg-amber-950 text-amber-400 px-1.5 py-0.5 rounded-full uppercase">Cárcel</span>' : ''}
+                        </div>
+                        <span class="text-xs font-black text-emerald-400">$${p.money.toLocaleString()}</span>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-slate-300 font-medium">
+                        <span>Ficha: <b class="text-amber-300">${p.symbolName || p.symbol}</b></span>
+                        <span>Propiedades: <b class="text-amber-300">${getPlayerPropsCount(p.id)}</b></span>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+        }
+
+        function getPlayerPropsCount(playerId) {
+            return Object.values(gameState.propertiesOwner || {}).filter(id => id === playerId).length;
+        }
+
+        function updateTokensOnBoard() {
+            BOARD_TILES.forEach(tile => {
+                const container = document.getElementById(`tile-tokens-${tile.id}`);
+                const ownerBadge = document.getElementById(`owner-badge-${tile.id}`);
+                if(container) container.innerHTML = '';
+
+                if(ownerBadge && gameState.propertiesOwner && gameState.propertiesOwner[tile.id]) {
+                    const owner = gameState.players.find(p => p.id === gameState.propertiesOwner[tile.id]);
+                    ownerBadge.innerText = owner ? `Ficha ${owner.symbol}` : '';
+                }
+            });
+
+            gameState.players.forEach(p => {
+                if(p.bankrupt) return;
+                const container = document.getElementById(`tile-tokens-${p.position}`);
+                if(container) {
+                    const token = document.createElement('div');
+                    token.className = 'player-token';
+                    token.style.backgroundColor = p.color;
+                    token.innerText = p.symbol;
+                    container.appendChild(token);
+                }
+            });
+        }
+
+        function updateTurnControls() {
+            if(gameState.players.length === 0) return;
+            const currentPlayer = gameState.players[gameState.currentTurnIndex];
+            const turnBadge = document.getElementById('turn-badge');
+            const rollBtn = document.getElementById('roll-btn');
+            const instruction = document.getElementById('turn-instruction');
+
+            if(turnBadge) turnBadge.innerText = `TURNO DE ${currentPlayer.name.toUpperCase()} (FICHA ${currentPlayer.symbol})`;
+
+            const isMyTurn = (userRole === 'player' && currentPlayer.id === myPlayerId) || userRole === 'banco';
+
+            if(rollBtn) {
+                rollBtn.disabled = !isMyTurn || isRolling || currentPlayer.bankrupt;
+                if(!isMyTurn) {
+                    instruction.innerText = userRole === 'spectator' 
+                        ? 'Estás en modo Ayudante. Envía tus sugerencias en el Chat.' 
+                        : `Esperando el lanzamiento de ${currentPlayer.name} (${currentPlayer.symbol})...`;
+                } else {
+                    instruction.innerText = '¡Es tu turno! Haz clic para lanzar los 2 dados.';
+                }
+            }
+        }
+
+        // --- 2 DICES ROLLING & MOVEMENT ---
+
+        window.handleRollClick = function() {
+            if(gameState.players.length === 0) return;
+            const currentPlayer = gameState.players[gameState.currentTurnIndex];
+            const isMyTurn = (userRole === 'player' && currentPlayer.id === myPlayerId) || userRole === 'banco';
+
+            if(!isMyTurn || isRolling) return;
+            isRolling = true;
+
+            const d1El = document.getElementById('dice-1');
+            const d2El = document.getElementById('dice-2');
+            d1El.classList.add('rolling');
+            d2El.classList.add('rolling');
+
+            setTimeout(() => {
+                const val1 = Math.floor(Math.random() * 6) + 1;
+                const val2 = Math.floor(Math.random() * 6) + 1;
+                const total = val1 + val2;
+
+                d1El.classList.remove('rolling');
+                d2El.classList.remove('rolling');
+
+                d1El.innerHTML = `<i class="fa-solid ${diceIcons[val1 - 1]}"></i>`;
+                d2El.innerHTML = `<i class="fa-solid ${diceIcons[val2 - 1]}"></i>`;
+                document.getElementById('dice-total-display').innerText = `Total dados: ${val1} + ${val2} = ${total}`;
+
+                logMessage(`${currentPlayer.name} sacó <b>${val1}</b> y <b>${val2}</b> (Total: <b>${total}</b>).`);
+                movePlayer(currentPlayer, total);
+                isRolling = false;
+            }, 500);
+        };
+
+        function movePlayer(player, steps) {
+            if(player.inJail) {
+                player.jailTurns--;
+                if(player.jailTurns <= 0) {
+                    player.inJail = false;
+                    logMessage(`${player.name} cumplió su sanción y sale de la cárcel.`);
+                } else {
+                    logMessage(`${player.name} permanece congelado en cárcel (${player.jailTurns} turnos restantes).`);
+                    setTimeout(completeTurn, 1000);
+                    return;
+                }
+            }
+
+            const oldPos = player.position;
+            player.position = (player.position + steps) % 40;
+
+            if(player.position < oldPos) {
+                player.laps++;
+                player.money += 10000;
+                logMessage(`¡${player.name} completó 1 vuelta y cobró <b>$10,000</b> en INICIO!`);
+            }
+
+            updateUI();
+
+            setTimeout(() => {
+                handleTileLanding(player);
+            }, 400);
+        }
+
+        function handleTileLanding(player) {
+            const tile = BOARD_TILES[player.position];
+            const ownerId = gameState.propertiesOwner ? gameState.propertiesOwner[tile.id] : null;
+
+            if(tile.type === 'property') {
+                if(!ownerId) {
+                    if(player.laps < 1) {
+                        showInfoModal('1ra Vuelta en Progreso', `Debes pasar por INICIO para desbloquear compras. Casilla: <b>${tile.name}</b>.`);
+                    } else {
+                        // NEW MECHANIC: PROMPT CHOICE TO BUY OR NOT BUY
+                        showBuyPromptModal(tile);
+                    }
+                } else if(ownerId === player.id) {
+                    showInfoModal('Tu Casilla', `Has caído en tu casilla <b>${tile.name}</b>.`);
+                } else {
+                    const owner = gameState.players.find(p => p.id === ownerId);
+                    payRent(player, owner, tile);
+                }
+            } else if(tile.type === 'tax') {
+                player.money -= tile.price;
+                if(player.money < 0) player.money = 0;
+                showInfoModal('Impuesto Escolar', `Pagas <b>$${tile.price.toLocaleString()}</b> de aportación al Banco.`);
+                logMessage(`${player.name} pagó $${tile.price.toLocaleString()} de impuesto.`);
+                updateUI();
+            } else if(tile.type === 'chance') {
+                const card = CHANCE_CARDS[Math.floor(Math.random() * CHANCE_CARDS.length)];
+                player.money += card.amount;
+                if(player.money < 0) player.money = 0;
+                showInfoModal('Tarjeta Reto', card.text);
+                logMessage(`${player.name}: ${card.text}`);
+                updateUI();
+            } else if(tile.type === 'go-to-jail') {
+                player.position = 10;
+                player.inJail = true;
+                player.jailTurns = 3;
+                showInfoModal('¡A la Cárcel!', `${player.name} fue sancionado con 3 turnos.`);
+                logMessage(`${player.name} cayó en Ir a la Cárcel.`);
+                updateUI();
+            } else if(tile.type === 'deported') {
+                showDeportedModal(player);
+            } else {
+                showInfoModal(tile.name, `Descansas en ${tile.name}.`);
+            }
+        }
+
+        // --- BUY PROMPT MECHANIC (COMPRAR / NO COMPRAR) ---
+
+        function showBuyPromptModal(tile) {
+            pendingTileForPurchase = tile;
+            document.getElementById('buy-prompt-title').innerText = `¿Deseas comprar ${tile.name}?`;
+            document.getElementById('buy-prompt-price').innerText = `Precio: $${tile.price.toLocaleString()}`;
+            document.getElementById('buy-prompt-rent').innerText = `Peaje: $${tile.rent.toLocaleString()}`;
+            document.getElementById('modal-buy-prompt').classList.remove('hidden');
+        }
+
+        window.chooseBuyProperty = function(wantsToBuy) {
+            closeModal('modal-buy-prompt');
+            
+            if(wantsToBuy && pendingTileForPurchase) {
+                showQuizModal(pendingTileForPurchase);
+            } else {
+                logMessage(`${gameState.players[gameState.currentTurnIndex].name} decidió NO comprar ${pendingTileForPurchase ? pendingTileForPurchase.name : 'la propiedad'}.`);
+                completeTurn();
+            }
+        };
+
+        // --- QUIZ & AUCTION MECHANICS ---
+
+        function showQuizModal(tile) {
+            const modal = document.getElementById('modal-quiz');
+            document.getElementById('quiz-topic-title').innerText = tile.name;
+            document.getElementById('quiz-topic-price').innerText = `Precio: $${tile.price.toLocaleString()}`;
+            document.getElementById('quiz-topic-rent').innerText = `Peaje: $${tile.rent.toLocaleString()}`;
+            document.getElementById('quiz-topic-desc').innerText = tile.desc;
+            document.getElementById('quiz-question-text').innerText = tile.q;
+
+            const optsContainer = document.getElementById('quiz-options-container');
+            optsContainer.innerHTML = '';
+            document.getElementById('quiz-feedback').classList.add('hidden');
+            document.getElementById('quiz-close-btn').classList.add('hidden');
+
+            const currentPlayer = gameState.players[gameState.currentTurnIndex];
+            const isMyTurn = (userRole === 'player' && currentPlayer.id === myPlayerId) || userRole === 'banco';
+
+            tile.opts.forEach((optText, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-white font-bold transition flex justify-between items-center';
+                btn.innerHTML = `<span>${optText}</span> <i class="fa-regular fa-circle text-slate-400"></i>`;
+                btn.disabled = !isMyTurn;
+
+                btn.onclick = () => answerQuiz(tile, i, btn);
+                optsContainer.appendChild(btn);
+            });
+
+            modal.classList.remove('hidden');
+        }
+
+        function answerQuiz(tile, selectedIdx, btnEl) {
+            const player = gameState.players[gameState.currentTurnIndex];
+            const feedback = document.getElementById('quiz-feedback');
+            const btns = document.querySelectorAll('#quiz-options-container button');
+            btns.forEach(b => b.disabled = true);
+
+            if(selectedIdx === tile.correct) {
+                btnEl.classList.add('bg-emerald-600', 'border-emerald-400');
+                feedback.classList.remov
