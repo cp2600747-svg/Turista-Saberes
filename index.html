@@ -240,7 +240,10 @@
                 <div id="lobby-players-list" class="grid grid-cols-2 gap-2 text-xs font-semibold">
                     <!-- Dynamic Players Only -->
                 </div>
-
+<div class="flex gap-2">
+  <input type="text" id="local-player-name" placeholder="Nombre del equipo" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl py-2 px-3 text-xs text-white">
+  <button onclick="addLocalPlayer()" class="px-3 py-2 bg-emerald-600 text-white font-black rounded-xl text-xs">+ Agregar</button>
+</div>
                 <div class="pt-2 text-center">
                     <button id="start-game-btn" onclick="hostStartGame()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg hidden">
                         ¡Iniciar Partida como EL BANCO!
@@ -733,7 +736,19 @@
                 container.appendChild(item);
             });
         }
-
+window.addLocalPlayer = function() {
+  if (userRole !== 'banco') return;
+  if (gameState.players.length >= 5) { alert('Máximo 5 jugadores'); return; }
+  const input = document.getElementById('local-player-name');
+  const id = gameState.players.length + 1;
+  gameState.players.push({
+    id, symbol: PLAYER_SYMBOLS[id-1], symbolName: PLAYER_SYMBOL_NAMES[id-1],
+    name: input.value.trim() || ('Equipo ' + id), color: PLAYER_COLORS[id-1],
+    money: 150000, position: 0, laps: 0, inJail: false, jailTurns: 0, bankrupt: false
+  });
+  input.value = '';
+  updateLobbyPlayersList();
+};
         window.hostStartGame = function() {
             if(gameState.players.length === 0) {
                 alert('Se necesita al menos 1 jugador unido para empezar.');
